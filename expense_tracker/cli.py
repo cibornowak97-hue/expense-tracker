@@ -30,7 +30,8 @@ def build_parser():
 
     sm = sub.add_parser("summary", help="total per category")
     sm.add_argument("-m", "--month", help="YYYY-MM")
-
+    ex = sub.add_parser("export", help="export all expenses to a CSV file")
+    ex.add_argument("filename")
     return parser
 
 
@@ -64,6 +65,15 @@ def run(args, db):
             print(f"{category:<14}{money(total):>12}")
         print("-" * 26)
         print(f"{'TOTAL':<14}{money(sum(t for _, t in rows)):>12}")
+    elif args.command == "export":
+        rows = db.list()
+        with open(args.filename, "w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "date", "category", "amount", "note"])
+            for r in rows:
+                writer.writerow([r["id"], r["spent_on"], r["category"],
+                                 f"{r['amount_cents'] / 100:.2f}", r["note"]])
+        print(f"Exported {len(rows)} expenses to {args.filename}")
 
 
 def main(argv=None):
